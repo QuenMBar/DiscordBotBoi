@@ -6,11 +6,27 @@
       "usersList": [
         {
           "disID": "211239874458550272",
-          "numDrinks": 0
+          "numDrinks": 17
         },
         {
           "disID": "258876507076820993",
-          "numDrinks": 0
+          "numDrinks": 26
+        }
+      ]
+    }
+  },
+  {
+    "channelID": "340585058765038346",
+    "guildID": "340588976465038346",
+    "users": {
+      "usersList": [
+        {
+          "disID": "211239874458550272",
+          "numDrinks": 4
+        },
+        {
+          "disID": "258876507076820993",
+          "numDrinks": 12
         }
       ]
     }
