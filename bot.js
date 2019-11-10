@@ -6,7 +6,6 @@
  * Better formating of responses @devin
  */
 
-
 // Import the discord.js module
 const Discord = require('discord.js');
 const parser = require('discord-command-parser');
@@ -229,6 +228,12 @@ client.on('message', message => {
             channels.init(channel);
             channels.printDrinks(message.channel);
             break;
+        case 'initq':
+            let channel = message.channel;
+            // console.log('Called by channel: ' + channel.name);
+            channels.init(channel);
+            // channels.printDrinks(message.channel);
+            break;
         case 'idk':
             message.reply('Same');
             break;
@@ -236,6 +241,7 @@ client.on('message', message => {
         case 'addDrink':
             channels.addDrinks(parsed.arguments[0], message.channel, 1);
             channels.printDrinks(message.channel);
+            break;
         case 'addDrinks':
             if (parsed.arguments[0] === undefined) {
                 let channel = message.channel;
