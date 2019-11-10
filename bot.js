@@ -199,9 +199,6 @@ class Channels {
             if (chan.channelID == channel.id) {
                 chan.users.printDrinks(channel);
                 return;
-            } else {
-                channel.send('Couldnt find your channel :D');
-                return;
             }
         });
     }
@@ -228,7 +225,7 @@ client.on('message', message => {
             channels.init(channel);
             channels.printDrinks(message.channel);
             break;
-        case 'initq':
+        case 'quietInit':
             let channel = message.channel;
             // console.log('Called by channel: ' + channel.name);
             channels.init(channel);
