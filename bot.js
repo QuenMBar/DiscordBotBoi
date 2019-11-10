@@ -227,7 +227,7 @@ client.on('message', message => {
             break;
         case 'quietInit':
             let channel = message.channel;
-            // console.log('Called by channel: ' + channel.name);
+            console.log('Quiet Init on channel: ' + channel.name);
             channels.init(channel);
             // channels.printDrinks(message.channel);
             break;
