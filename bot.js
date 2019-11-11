@@ -218,15 +218,14 @@ client.on('ready', () => {
 client.on('message', message => {
     const parsed = parser.parse(message, prefix);
     if (!parsed.success) return;
+    let channel = message.channel;
     switch (parsed.command) {
         case 'init':
-            let channel = message.channel;
             // console.log('Called by channel: ' + channel.name);
             channels.init(channel);
             channels.printDrinks(message.channel);
             break;
         case 'quietInit':
-            let channel = message.channel;
             console.log('Quiet Init on channel: ' + channel.name);
             channels.init(channel);
             // channels.printDrinks(message.channel);
@@ -241,7 +240,6 @@ client.on('message', message => {
             break;
         case 'addDrinks':
             if (parsed.arguments[0] === undefined) {
-                let channel = message.channel;
                 let filter = m => m.author.id === message.author.id;
                 let stringToSend = 'Please reply with the user that youd like to add drinks to: \n```';
                 let i = 1;
@@ -283,7 +281,6 @@ client.on('message', message => {
                 // console.log('Exiting');
                 break;
             } else if (!isNaN(parseInt(parsed.arguments[0]))) {
-                let channel = message.channel;
                 let filter = m => m.author.id === message.author.id;
                 let stringToSend = 'Please reply with the user that youd like to add drinks to: \n```';
                 let i = 1;
@@ -321,7 +318,6 @@ client.on('message', message => {
                 channels.printDrinks(message.channel);
                 break;
             } else if (parsed.arguments[0] != undefined && parsed.arguments[1] === undefined) {
-                let channel = message.channel;
                 let filter = m => m.author.id === message.author.id;
                 channel.send('How many would you like to add?');
                 channel.awaitMessages(filter, { max: 1 }).then(recieved2 => {
