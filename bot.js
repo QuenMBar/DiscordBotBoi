@@ -206,6 +206,45 @@ class Channels {
 
 var channels = new Channels();
 
+function getPersonSelection(message) {
+    return new Promise((resolve, reject) => {
+        let filter = m => m.author.id === message.author.id;
+        let stringToSend = 'Please reply with the user that youd like to add drinks to: \n```';
+        let i = 1;
+        message.channel.members.forEach(member => {
+            if (member.user.bot == false) {
+                stringToSend += i + ': ' + member.user.username + '\n';
+                i++;
+            }
+        });
+        stringToSend += '```';
+        message.channel.send(stringToSend);
+        message.channel.awaitMessages(filter, { max: 1 }).then(recieved => {
+            // console.log(parseInt(recieved.first().content));
+            if (!isNaN(parseInt(recieved.first().content)) && 0 <= parseInt(recieved.first().content) <= i) {
+                let j = 1;
+                let userToAddTo = '';
+                message.channel.members.forEach(member => {
+                    if (member.user.bot == false) {
+                        if (j === parseInt(recieved.first().content)) {
+                            userToAddTo = member.user.username;
+                        }
+                        j++;
+                    }
+                });
+                resolve(userToAddTo);
+            }
+        }).catch(err => {
+            console.log(err);
+            reject(err);
+        });
+    });
+}
+
+function getNumberSelection() {
+
+}
+
 /**
  * The ready event is vital, it means that only _after_ this will your bot start reacting to information
  * received from Discord
@@ -240,30 +279,30 @@ client.on('message', message => {
             break;
         case 'addDrinks':
             if (parsed.arguments[0] === undefined) {
-                let filter = m => m.author.id === message.author.id;
-                let stringToSend = 'Please reply with the user that youd like to add drinks to: \n```';
-                let i = 1;
-                channel.members.forEach(member => {
-                    if (member.user.bot == false) {
-                        stringToSend += i + ': ' + member.user.username + '\n';
-                        i++;
-                    }
-                });
-                stringToSend += '```';
-                channel.send(stringToSend);
-                channel.awaitMessages(filter, { max: 1 }).then(recieved => {
-                    // console.log(parseInt(recieved.first().content));
-                    if (!isNaN(parseInt(recieved.first().content)) && 0 <= parseInt(recieved.first().content) <= i) {
-                        let j = 1;
-                        let userToAddTo = '';
-                        channel.members.forEach(member => {
-                            if (member.user.bot == false) {
-                                if (j === parseInt(recieved.first().content)) {
-                                    userToAddTo = member.user.username;
-                                }
-                                j++;
-                            }
-                        });
+                // let filter = m => m.author.id === message.author.id;
+                // let stringToSend = 'Please reply with the user that youd like to add drinks to: \n```';
+                // let i = 1;
+                // channel.members.forEach(member => {
+                //     if (member.user.bot == false) {
+                //         stringToSend += i + ': ' + member.user.username + '\n';
+                //         i++;
+                //     }
+                // });
+                // stringToSend += '```';
+                // channel.send(stringToSend);
+                // channel.awaitMessages(filter, { max: 1 }).then(recieved => {
+                //     // console.log(parseInt(recieved.first().content));
+                //     if (!isNaN(parseInt(recieved.first().content)) && 0 <= parseInt(recieved.first().content) <= i) {
+                //         let j = 1;
+                //         let userToAddTo = '';
+                //         channel.members.forEach(member => {
+                //             if (member.user.bot == false) {
+                //                 if (j === parseInt(recieved.first().content)) {
+                //                     userToAddTo = member.user.username;
+                //                 }
+                //                 j++;
+                //             }
+                //         });
                         channel.send('How many would you like to add?');
                         channel.awaitMessages(filter, { max: 1 }).then(recieved2 => {
                             if (!isNaN(parseInt(recieved.first().content))) {
@@ -274,11 +313,16 @@ client.on('message', message => {
                         }).catch(err => {
                             console.log(err);
                         });
-                    }
+                //     }
+                // }).catch(err => {
+                //     console.log(err);
+                // });
+                // // console.log('Exiting');
+                getPersonSelection(message).then(userToAddTo => {
+
                 }).catch(err => {
                     console.log(err);
                 });
-                // console.log('Exiting');
                 break;
             } else if (!isNaN(parseInt(parsed.arguments[0]))) {
                 let filter = m => m.author.id === message.author.id;
@@ -340,7 +384,7 @@ client.on('message', message => {
             channels.printDrinks(message.channel);
             break;
         case 'Help':
-            message.reply('Just ask Quentin.  Most likely hes stupid!');
+            message.reply('```Commands that you can use: \n~init:   To init the channel\n~quietInit:    To init with out print the drinks num\n~addDrink [person]:  Add one drink to that person\n~addDrinks [person] [number]\n~printDrinks:   Print the drinks for the channel');
             break;
     }
 });
