@@ -7,8 +7,6 @@ npm-debug.log
 dist/
 .passwordrc
 node_modules
-bot.bat
-channels.jsons
 
 # Emacs
 *.*~
