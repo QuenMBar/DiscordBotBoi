@@ -8,6 +8,9 @@
  * Also, if youre new to npm:
  * https://www.digitaltrends.com/gaming/how-to-make-a-discord-bot/
  * Also, putting @devin everywhere things are printed in discord.
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Thanks Q... - I'm adding some stuff for the Keanu Reeves now because I'm procrastinating aye
+ * Also, I'm adding @quentin everywhere I have stuff that I don't know how works thanks <3
  */
 
 // Import the discord.js module
@@ -25,11 +28,17 @@ class User {
     constructor(disID, numDrinks) {
         this.disID = disID;
         this.numDrinks = numDrinks;
+        this.keanu = true;
     }
 
     //adds drinks to user
     addDrinks(numAdd) {
         this.numDrinks += numAdd;
+    }
+    
+    //use Keanu
+    callUponThineGoat() {
+        this.keanu = false;
     }
 }
 
@@ -39,7 +48,7 @@ class Users {
         this.usersList = [];
     }
 
-    //For all the members in a channel, checks to see if theyre added into the list and if they arnt adds them
+    //For all the members in a channel, checks to see if theyre added into the list and if they arent adds them
     init(channel) {
         channel.members.forEach(member => {
             if (member.user.bot == false) {
@@ -52,6 +61,7 @@ class Users {
     }
 
     //For restoring from file.  Checks users in channel against the onces stored and if they have drinks or not
+    //Dude this is sick how did you figure this out
     reAdd(channel, listOfUserIDs) {
         channel.members.forEach(member => {
             if (member.user.bot == false) {
@@ -70,6 +80,17 @@ class Users {
         let userToAddTo = this.usersList.find(({ disID }) => client.users.get(disID).username == username);
         userToAddTo.addDrinks(numToAdd);
     }
+    
+    //@quentin - just reusing the code from above b/c keanu is much simpler but not sure if it'll work
+    usersKeanu(username) {
+        let userCalling = this.usersList.find(({ disID }) => client.users.get(disID).username == username);
+        if userCalling.keanu {
+            userCalling.callUponThineGoat();
+        } else {
+            //TODO fix fail case
+            return;
+        }
+    }
 
     //Prints the drinks for all users
     // @devin
@@ -79,6 +100,13 @@ class Users {
             stringToWrite += client.users.get(user.disID).username + ' with ' + user.numDrinks + ' drinks\n'
         });
         stringToWrite += '```'
+        channel.send(stringToWrite);
+    }
+    
+    printKeanu(channel) {
+        //TODO
+        //client.users.get(user.disID).username is fucking ridiculous
+        let stringToWrite = '```KEANU REEVES HATH APPEARED```\n```AND GIVEN HIS BLESSING```';
         channel.send(stringToWrite);
     }
 
@@ -171,11 +199,29 @@ class Channels {
         }
         this.saveFile();
     }
+    
+    //why do i have to go through 4 different calls to make this thing happen @quentin
+    channelsKeanuUse(username, channel) {
+        let chanToAdd = this.channels.find(({ channelID }) => channelID === channel.id);
+        if (chanToAdd != undefined) {
+            //usersKeanu has check if used
+            chanToAdd.users.usersKeanu(username);
+        } else {
+            channel.send('Couldnt get channel');
+        }
+        this.saveFile();
+    }
 
     //Finds the correct channel to print drinks to and passes it on
     printDrinks(channel) {
         let chanToPrint = this.channels.find(({ channelID }) => channelID === channel.id);
         chanToPrint.users.printDrinks(channel);
+    }
+    
+    //We could find a better way to code this process @quentin
+    channelsKeanuPrint(channel) {
+        let chanToPrint = this.channels.find(({ channelID }) => channelID === channel.id);
+        chanToPrint.users.printKeanu(channel);
     }
 }
 
@@ -263,6 +309,7 @@ client.on('message', message => {
     let channel = message.channel;
 
     //Switch to handle different commands
+    //@quentin this is completely illegible i have no idea how to add the keanu to this
     switch (parsed.command) {
         case 'init':
             console.log('Init on channel: ' + channel.name);
@@ -336,8 +383,13 @@ client.on('message', message => {
                 'Shouldnt be needed commands: \n' +
                 '~init:                             To init the channel\n' +
                 '~quietInit:                        To init without printing the drinks\n\n' +
+                '~callUponThineGoat [person]:       Use your Keanu bb'
                 'If you find any bugs, please hit Quentin 😀```');
             break;
+        case 'callUponThineGoat':
+            console.log('Using Keanu');
+            channels.init(message.channel);
+            channels.channelsKeanuUse(parsed.arguments[0], message.channel);
     }
 });
 
