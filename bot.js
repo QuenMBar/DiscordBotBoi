@@ -4,7 +4,6 @@
  * futer projects.
  *
  * TODO: Sort by guild, not channel
- * TODO: Colapse users and channel
  *
  * Better formating of responses.  Following link could be helpfull @devin
  * https://discordjs.guide/popular-topics/embeds.html#embed-preview
@@ -46,15 +45,18 @@ class User {
     }
 }
 
-//Users class.  Just a collection of User
-class Users {
-    constructor() {
+//Channel struct that is mostly mannaged by Channels
+class Channel {
+    //Stores info about channel
+    constructor(channel) {
+        this.channelID = channel.id;
+        this.guildID = channel.guild.id;
         this.usersList = [];
     }
 
     //For all the members in a channel, checks to see if theyre added into the list and if they arent adds them
-    init(channel) {
-        channel.members.forEach(member => {
+    addUsers() {
+        client.channels.get(this.channelID).members.forEach(member => {
             if (member.user.bot == false) {
                 let userIsInSystem = this.usersList.find(({ disID }) => disID === member.user.id);
                 if (userIsInSystem === undefined) {
@@ -67,13 +69,26 @@ class Users {
 
     //For restoring from file.  Checks users in channel against the onces stored and if they have drinks or not
     //Dude this is sick how did you figure this out
-    reAdd(channel, listOfUserIDs) {
-        channel.members.forEach(member => {
+    reAddUsers(listOfUserIDs) {
+        client.channels.get(this.channelID).members.forEach(member => {
             if (member.user.bot == false) {
-                let userSaved = listOfUserIDs.usersList.find(({ disID }) => disID === member.user.id);
+                let userSaved = listOfUserIDs.find(({ disID }) => disID === member.user.id);
                 if (userSaved != undefined) {
                     this.usersList.push(new User(member.user.id, userSaved.numDrinks, userSaved.keanu));
                 } else {
+                    this.usersList.push(new User(member.user.id, 0));
+                }
+            }
+        });
+        channels.saveFile();
+    }
+
+    //Tries to add new users for a channel
+    addNewUsers() {
+        client.channels.get(this.channelID).members.forEach(member => {
+            if (member.user.bot == false) {
+                let oldUser = this.usersList.find(({ disID }) => disID === member.user.id);
+                if (oldUser === undefined) {
                     this.usersList.push(new User(member.user.id, 0));
                 }
             }
@@ -117,44 +132,6 @@ class Users {
         let stringToWrite = "```KEANU REEVES HATH APPEARED```\n```AND GIVEN HIS BLESSING```";
         channel.send(stringToWrite);
     }
-
-    //Tries to add new users for a channel
-    addNewUsers(channel) {
-        channel.members.forEach(member => {
-            if (member.user.bot == false) {
-                let oldUser = this.usersList.find(({ disID }) => disID === member.user.id);
-                if (oldUser === undefined) {
-                    this.usersList.push(new User(member.user.id, 0));
-                }
-            }
-        });
-        channels.saveFile();
-    }
-}
-
-//Channel struct that is mostly mannaged by Channels
-class Channel {
-    //Stores info about channel
-    constructor(channel) {
-        this.channelID = channel.id;
-        this.guildID = channel.guild.id;
-        this.users = new Users();
-    }
-
-    //Pass through for add users
-    addUsers() {
-        this.users.init(client.channels.get(this.channelID));
-    }
-
-    //Pass through for reAddUsers
-    reAddUsers(listOfUserIDs) {
-        this.users.reAdd(client.channels.get(this.channelID), listOfUserIDs);
-    }
-
-    //Pass through for addNewUsers
-    addNewUsers() {
-        this.users.addNewUsers(client.channels.get(this.channelID));
-    }
 }
 
 //Class for channels that is a collection of channel.  Also implements storing data and reading data
@@ -182,13 +159,12 @@ class Channels {
         var createdChan = new Channel(channel);
         let oldChanFind = this.oldChannels.find(({ channelID }) => channelID === createdChan.channelID);
         if (oldChanFind != undefined) {
-            createdChan.reAddUsers(oldChanFind.users);
+            createdChan.reAddUsers(oldChanFind.usersList);
             this.channels.push(createdChan);
             this.oldChannels.splice(this.oldChannels.indexOf(oldChanFind), 1);
         } else {
             let currentChanFind = this.channels.find(({ channelID }) => channelID === createdChan.channelID);
             if (currentChanFind != undefined) {
-                // currentChanFind.addNewUsers();
                 this.channels[this.channels.indexOf(currentChanFind)].addNewUsers();
             } else {
                 createdChan.addUsers();
@@ -205,7 +181,6 @@ class Channels {
             channel.send("Couldnt find your channel :D");
             return undefined;
         }
-        // this.saveFile();
     }
 }
 
@@ -311,19 +286,19 @@ client.on("message", message => {
             break;
         case "addDrink":
             console.log("Add drink: " + message.channel.name);
-            channelInMemory.users.addDrinks(parsed.arguments[0], 1);
-            channelInMemory.users.printDrinks(message.channel);
+            channelInMemory.addDrinks(parsed.arguments[0], 1);
+            channelInMemory.printDrinks(message.channel);
             break;
         case "addDrinks":
-            console.log("Add drinks: " + channel.name);
+            console.log("Add drinks: " + message.channel.name);
             if (parsed.arguments[0] === undefined) {
                 //With no other inputs
                 getPersonSelection(message)
                     .then(userToAddTo => {
                         getNumberSelection(message)
                             .then(numberOfDrinks => {
-                                channelInMemory.users.addDrinks(userToAddTo, numberOfDrinks);
-                                channelInMemory.users.printDrinks(message.channel);
+                                channelInMemory.addDrinks(userToAddTo, numberOfDrinks);
+                                channelInMemory.printDrinks(message.channel);
                             })
                             .catch(err => {
                                 console.log(err);
@@ -337,8 +312,8 @@ client.on("message", message => {
                 //One other input thats a number of drinks
                 getPersonSelection(message)
                     .then(userToAddTo => {
-                        channelInMemory.users.addDrinks(userToAddTo, parseInt(parsed.arguments[0]));
-                        channelInMemory.users.printDrinks(message.channel);
+                        channelInMemory.addDrinks(userToAddTo, parseInt(parsed.arguments[0]));
+                        channelInMemory.printDrinks(message.channel);
                     })
                     .catch(err => {
                         console.log(err);
@@ -346,15 +321,15 @@ client.on("message", message => {
                 break;
             } else if (parsed.arguments[0] != undefined && !isNaN(parseInt(parsed.arguments[1]))) {
                 //Both other inputs are provided
-                channelInMemory.users.addDrinks(parsed.arguments[0], parseInt(parsed.arguments[1]));
-                channelInMemory.users.printDrinks(message.channel);
+                channelInMemory.addDrinks(parsed.arguments[0], parseInt(parsed.arguments[1]));
+                channelInMemory.printDrinks(message.channel);
                 break;
             } else if (parsed.arguments[0] != undefined && parsed.arguments[1] === undefined) {
                 //Ony the username is provided
                 getNumberSelection(message)
                     .then(numberOfDrinks => {
-                        channelInMemory.users.addDrinks(parsed.arguments[0], numberOfDrinks);
-                        channelInMemory.users.printDrinks(message.channel);
+                        channelInMemory.addDrinks(parsed.arguments[0], numberOfDrinks);
+                        channelInMemory.printDrinks(message.channel);
                     })
                     .catch(err => {
                         console.log(err);
@@ -367,28 +342,25 @@ client.on("message", message => {
                 );
                 break;
             }
+        case "callUponThineGoat":
+            console.log("Using Keanu");
+            channelInMemory.usersKeanu(parsed.arguments[0]);
         case "printDrinks":
             console.log("Print drinks: " + message.channel);
-            channelInMemory.users.printDrinks(message.channel);
+            channelInMemory.printDrinks(message.channel);
             break;
         case "help":
-            console.log("HELP: " + channel.name);
+            console.log("HELP: " + message.channel.name);
             // @devin
             message.reply(
                 "```Commands that you can use: \n" +
                 "~addDrink [person]:                Add one drink to that person\n" +
                 "~addDrinks [person] [number]:      Add any numbe of drinks to a person.  Person and num are optional\n" +
                 "~printDrinks:                      Print the drinks for the channel\n\n" +
-                "Shouldnt be needed commands: \n" +
-                "~init:                             To init the channel\n" +
-                "~quietInit:                        To init without printing the drinks\n\n" +
                 "~callUponThineGoat [person]:       Use your Keanu bb" +
                 "If you find any bugs, please hit Quentin 😀```"
             );
             break;
-        case "callUponThineGoat":
-            console.log("Using Keanu");
-            channelInMemory.users.usersKeanu(parsed.arguments[0]);
     }
 });
 
