@@ -6,15 +6,18 @@
       "usersList": [
         {
           "disID": "211239874458550272",
-          "numDrinks": 33
+          "numDrinks": 38,
+          "keanu": true
         },
         {
           "disID": "258876507076820993",
-          "numDrinks": 33
+          "numDrinks": 33,
+          "keanu": true
         },
         {
           "disID": "623987696716480522",
-          "numDrinks": 34
+          "numDrinks": 34,
+          "keanu": true
         }
       ]
     }
@@ -46,7 +49,7 @@
         },
         {
           "disID": "502295662294204416",
-          "numDrinks": 1
+          "numDrinks": 0
         },
         {
           "disID": "258876507076820993",

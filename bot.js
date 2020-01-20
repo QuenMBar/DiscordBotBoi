@@ -1,8 +1,11 @@
 /***
  * This bot is designed to be able to store info about users in channels in discord
- * and then allow things to be done with that data.  Can be used as a frame work for 
+ * and then allow things to be done with that data.  Can be used as a frame work for
  * futer projects.
- * 
+ *
+ * TODO: Sort by guild, not channel
+ * TODO: Colapse users and channel
+ *
  * Better formating of responses.  Following link could be helpfull @devin
  * https://discordjs.guide/popular-topics/embeds.html#embed-preview
  * Also, if youre new to npm:
@@ -14,28 +17,29 @@
  */
 
 // Import the discord.js module
-const Discord = require('discord.js');
-const parser = require('discord-command-parser');
-const fs = require('fs');
+const Discord = require("discord.js");
+const parser = require("discord-command-parser");
+const fs = require("fs");
 
 // Create an instance of a Discord client
-const prefix = '~';
+const prefix = "~";
 const client = new Discord.Client();
 
 //user struct and simple adding call
 class User {
     //Stores info for user
-    constructor(disID, numDrinks) {
+    constructor(disID, numDrinks, keanuVal) {
         this.disID = disID;
         this.numDrinks = numDrinks;
-        this.keanu = true;
+        if (keanuVal === undefined) keanuVal = true;
+        this.keanu = keanuVal;
     }
 
     //adds drinks to user
     addDrinks(numAdd) {
         this.numDrinks += numAdd;
     }
-    
+
     //use Keanu
     callUponThineGoat() {
         this.keanu = false;
@@ -58,6 +62,7 @@ class Users {
                 }
             }
         });
+        channels.saveFile();
     }
 
     //For restoring from file.  Checks users in channel against the onces stored and if they have drinks or not
@@ -65,48 +70,51 @@ class Users {
     reAdd(channel, listOfUserIDs) {
         channel.members.forEach(member => {
             if (member.user.bot == false) {
-                let hasDrinks = listOfUserIDs.usersList.find(({ disID }) => disID === member.user.id);
-                if (hasDrinks != undefined) {
-                    this.usersList.push(new User(member.user.id, hasDrinks.numDrinks));
+                let userSaved = listOfUserIDs.usersList.find(({ disID }) => disID === member.user.id);
+                if (userSaved != undefined) {
+                    this.usersList.push(new User(member.user.id, userSaved.numDrinks, userSaved.keanu));
                 } else {
                     this.usersList.push(new User(member.user.id, 0));
                 }
             }
         });
+        channels.saveFile();
     }
 
     //Adds specified number of drinks to user
     addDrinks(username, numToAdd) {
         let userToAddTo = this.usersList.find(({ disID }) => client.users.get(disID).username == username);
         userToAddTo.addDrinks(numToAdd);
+        channels.saveFile();
     }
-    
+
     //@quentin - just reusing the code from above b/c keanu is much simpler but not sure if it'll work
     usersKeanu(username) {
         let userCalling = this.usersList.find(({ disID }) => client.users.get(disID).username == username);
-        if userCalling.keanu {
+        if (userCalling.keanu) {
             userCalling.callUponThineGoat();
         } else {
             //TODO fix fail case
             return;
         }
+        channels.saveFile();
     }
 
     //Prints the drinks for all users
     // @devin
     printDrinks(channel) {
-        let stringToWrite = '```The current drink count is: \n';
+        let stringToWrite = "```The current drink count is: \n";
         this.usersList.forEach(user => {
-            stringToWrite += client.users.get(user.disID).username + ' with ' + user.numDrinks + ' drinks\n'
+            stringToWrite += client.users.get(user.disID).username + " with " + user.numDrinks + " drinks\n";
         });
-        stringToWrite += '```'
+        stringToWrite += "```";
         channel.send(stringToWrite);
     }
-    
+
     printKeanu(channel) {
         //TODO
         //client.users.get(user.disID).username is fucking ridiculous
-        let stringToWrite = '```KEANU REEVES HATH APPEARED```\n```AND GIVEN HIS BLESSING```';
+        let stringToWrite = "```KEANU REEVES HATH APPEARED```\n```AND GIVEN HIS BLESSING```";
         channel.send(stringToWrite);
     }
 
@@ -120,6 +128,7 @@ class Users {
                 }
             }
         });
+        channels.saveFile();
     }
 }
 
@@ -159,16 +168,16 @@ class Channels {
     saveFile() {
         let bothChannels = this.channels.concat(this.oldChannels);
         let data = JSON.stringify(bothChannels, null, 2);
-        fs.writeFileSync('channels.json', data);
+        fs.writeFileSync("channels.json", data);
     }
 
     //Takes the data from file on startup and puts it into memory
     readFile() {
-        let rawdata = fs.readFileSync('channels.json');
+        let rawdata = fs.readFileSync("channels.json");
         this.oldChannels = JSON.parse(rawdata);
     }
 
-    //Used to add all the users in a server to the memory, and add users from file if they existv
+    //Used to add all the users in a server to the memory, and add users from file if they exist
     init(channel) {
         var createdChan = new Channel(channel);
         let oldChanFind = this.oldChannels.find(({ channelID }) => channelID === createdChan.channelID);
@@ -188,40 +197,15 @@ class Channels {
         }
     }
 
-    //Finds the correct channel to add drinks to and passes it on
-    // @devin
-    addDrinks(username, channel, numToAdd) {
-        let chanToAdd = this.channels.find(({ channelID }) => channelID === channel.id);
-        if (chanToAdd != undefined) {
-            chanToAdd.users.addDrinks(username, numToAdd);
+    navigateToChannel(channel) {
+        let navChannel = this.channels.find(({ channelID }) => channelID === channel.id);
+        if (navChannel != undefined) {
+            return navChannel;
         } else {
-            channel.send('Couldnt find your channel :D');
+            channel.send("Couldnt find your channel :D");
+            return undefined;
         }
-        this.saveFile();
-    }
-    
-    //why do i have to go through 4 different calls to make this thing happen @quentin
-    channelsKeanuUse(username, channel) {
-        let chanToAdd = this.channels.find(({ channelID }) => channelID === channel.id);
-        if (chanToAdd != undefined) {
-            //usersKeanu has check if used
-            chanToAdd.users.usersKeanu(username);
-        } else {
-            channel.send('Couldnt get channel');
-        }
-        this.saveFile();
-    }
-
-    //Finds the correct channel to print drinks to and passes it on
-    printDrinks(channel) {
-        let chanToPrint = this.channels.find(({ channelID }) => channelID === channel.id);
-        chanToPrint.users.printDrinks(channel);
-    }
-    
-    //We could find a better way to code this process @quentin
-    channelsKeanuPrint(channel) {
-        let chanToPrint = this.channels.find(({ channelID }) => channelID === channel.id);
-        chanToPrint.users.printKeanu(channel);
+        // this.saveFile();
     }
 }
 
@@ -230,34 +214,39 @@ class Channels {
 function getPersonSelection(message) {
     return new Promise((resolve, reject) => {
         let filter = m => m.author.id === message.author.id;
-        let stringToSend = 'Please reply with the user that youd like to add drinks to: \n```';
+        let stringToSend = "Please reply with the user that youd like to add drinks to: \n```";
         let i = 1;
         message.channel.members.forEach(member => {
             if (member.user.bot == false) {
-                stringToSend += i + ': ' + member.user.username + '\n';
+                stringToSend += i + ": " + member.user.username + "\n";
                 i++;
             }
         });
-        stringToSend += '```';
+        stringToSend += "```";
         message.channel.send(stringToSend);
-        message.channel.awaitMessages(filter, { max: 1 }).then(recieved => {
-            if (!isNaN(parseInt(recieved.first().content)) && 0 <= parseInt(recieved.first().content) <= i) {
-                let j = 1;
-                let userToAddTo = '';
-                message.channel.members.forEach(member => {
-                    if (member.user.bot == false) {
-                        if (j === parseInt(recieved.first().content)) {
-                            userToAddTo = member.user.username;
+        message.channel
+            .awaitMessages(filter, {
+                max: 1
+            })
+            .then(recieved => {
+                if (!isNaN(parseInt(recieved.first().content)) && 0 <= parseInt(recieved.first().content) <= i) {
+                    let j = 1;
+                    let userToAddTo = "";
+                    message.channel.members.forEach(member => {
+                        if (member.user.bot == false) {
+                            if (j === parseInt(recieved.first().content)) {
+                                userToAddTo = member.user.username;
+                            }
+                            j++;
                         }
-                        j++;
-                    }
-                });
-                resolve(userToAddTo);
-            }
-        }).catch(err => {
-            console.log(err);
-            reject(err);
-        });
+                    });
+                    resolve(userToAddTo);
+                }
+            })
+            .catch(err => {
+                console.log(err);
+                reject(err);
+            });
     });
 }
 
@@ -266,15 +255,20 @@ function getPersonSelection(message) {
 function getNumberSelection(message) {
     return new Promise((resolve, reject) => {
         let filter = m => m.author.id === message.author.id;
-        message.channel.send('How many would you like to add?');
-        message.channel.awaitMessages(filter, { max: 1 }).then(recieved2 => {
-            if (!isNaN(parseInt(recieved2.first().content))) {
-                resolve(parseInt(recieved2.first().content));
-            }
-        }).catch(err => {
-            console.log(err);
-            reject(err);
-        });
+        message.channel.send("How many would you like to add?");
+        message.channel
+            .awaitMessages(filter, {
+                max: 1
+            })
+            .then(recieved2 => {
+                if (!isNaN(parseInt(recieved2.first().content))) {
+                    resolve(parseInt(recieved2.first().content));
+                }
+            })
+            .catch(err => {
+                console.log(err);
+                reject(err);
+            });
     });
 }
 
@@ -285,111 +279,116 @@ var channels = new Channels();
  * The ready event is vital, it means that only _after_ this will your bot start reacting to information
  * received from Discord
  */
-client.on('ready', () => {
-    console.log('I am ready!');
+client.on("ready", () => {
+    console.log("I am ready!");
 });
 
 // Create an event listener for messages
-client.on('message', message => {
+client.on("message", message => {
     //Parse the command
     const parsed = parser.parse(message, prefix);
 
     //dad-bot
     // @devin
-    if (message.content.substring(0, 3) === 'Im ' ||
-        message.content.substring(0, 3) === 'im ') {
-        return message.reply('Hi ' + message.content.substring(3) + ', I\'m Your boi, the bot boi!');
-    } else if (message.content.substring(0, 4) === 'I\'m ' ||
-        message.content.substring(0, 4) === 'i\'m ') {
-        return message.reply('Hi ' + message.content.substring(4) + ', I\'m Your boi, the bot boi!');
+    if (message.content.substring(0, 3) === "Im " || message.content.substring(0, 3) === "im ") {
+        return message.reply("Hi " + message.content.substring(3) + ", I'm Your boi, the bot boi!");
+    } else if (message.content.substring(0, 4) === "I'm " || message.content.substring(0, 4) === "i'm ") {
+        return message.reply("Hi " + message.content.substring(4) + ", I'm Your boi, the bot boi!");
     }
 
     //If cant be parsed, get out
     if (!parsed.success) return;
-    let channel = message.channel;
+
+    channels.init(message.channel);
+    let channelInMemory = channels.navigateToChannel(message.channel);
+    if (channelInMemory == undefined) return;
 
     //Switch to handle different commands
     //@quentin this is completely illegible i have no idea how to add the keanu to this
     switch (parsed.command) {
-        case 'init':
-            console.log('Init on channel: ' + channel.name);
-            channels.init(channel);
-            channels.printDrinks(message.channel);
+        case "idk":
+            message.reply("Same");
             break;
-        case 'quietInit':
-            console.log('Quiet Init on channel: ' + channel.name);
-            channels.init(channel);
+        case "addDrink":
+            console.log("Add drink: " + message.channel.name);
+            channelInMemory.users.addDrinks(parsed.arguments[0], 1);
+            channelInMemory.users.printDrinks(message.channel);
             break;
-        case 'idk':
-            message.reply('Same');
-            break;
-        case 'addDrink':
-            console.log('Add drink: ' + channel.name);
-            channels.init(message.channel);
-            channels.addDrinks(parsed.arguments[0], message.channel, 1);
-            channels.printDrinks(message.channel);
-            break;
-        case 'addDrinks':
-            console.log('Add drinks: ' + channel.name);
-            channels.init(message.channel);
-            if (parsed.arguments[0] === undefined) { //With no other inputs
-                getPersonSelection(message).then(userToAddTo => {
-                    getNumberSelection(message).then(numberOfDrinks => {
-                        channels.addDrinks(userToAddTo, message.channel, numberOfDrinks);
-                        channels.printDrinks(message.channel);
-                    }).catch(err => {
+        case "addDrinks":
+            console.log("Add drinks: " + channel.name);
+            if (parsed.arguments[0] === undefined) {
+                //With no other inputs
+                getPersonSelection(message)
+                    .then(userToAddTo => {
+                        getNumberSelection(message)
+                            .then(numberOfDrinks => {
+                                channelInMemory.users.addDrinks(userToAddTo, numberOfDrinks);
+                                channelInMemory.users.printDrinks(message.channel);
+                            })
+                            .catch(err => {
+                                console.log(err);
+                            });
+                    })
+                    .catch(err => {
                         console.log(err);
                     });
-                }).catch(err => {
-                    console.log(err);
-                });
                 break;
-            } else if (!isNaN(parseInt(parsed.arguments[0]))) { //One other input thats a number of drinks
-                getPersonSelection(message).then(userToAddTo => {
-                    channels.addDrinks(userToAddTo, message.channel, parseInt(parsed.arguments[0]));
-                    channels.printDrinks(message.channel);
-                }).catch(err => {
-                    console.log(err);
-                });
+            } else if (!isNaN(parseInt(parsed.arguments[0]))) {
+                //One other input thats a number of drinks
+                getPersonSelection(message)
+                    .then(userToAddTo => {
+                        channelInMemory.users.addDrinks(userToAddTo, parseInt(parsed.arguments[0]));
+                        channelInMemory.users.printDrinks(message.channel);
+                    })
+                    .catch(err => {
+                        console.log(err);
+                    });
                 break;
-            } else if (parsed.arguments[0] != undefined && !isNaN(parseInt(parsed.arguments[1]))) { //Both other inputs are provided
-                channels.addDrinks(parsed.arguments[0], message.channel, parseInt(parsed.arguments[1]));
-                channels.printDrinks(message.channel);
+            } else if (parsed.arguments[0] != undefined && !isNaN(parseInt(parsed.arguments[1]))) {
+                //Both other inputs are provided
+                channelInMemory.users.addDrinks(parsed.arguments[0], parseInt(parsed.arguments[1]));
+                channelInMemory.users.printDrinks(message.channel);
                 break;
-            } else if (parsed.arguments[0] != undefined && parsed.arguments[1] === undefined) { //Ony the username is provided
-                getNumberSelection(message).then(numberOfDrinks => {
-                    channels.addDrinks(parsed.arguments[0], message.channel, numberOfDrinks);
-                    channels.printDrinks(message.channel);
-                }).catch(err => {
-                    console.log(err);
-                });
+            } else if (parsed.arguments[0] != undefined && parsed.arguments[1] === undefined) {
+                //Ony the username is provided
+                getNumberSelection(message)
+                    .then(numberOfDrinks => {
+                        channelInMemory.users.addDrinks(parsed.arguments[0], numberOfDrinks);
+                        channelInMemory.users.printDrinks(message.channel);
+                    })
+                    .catch(err => {
+                        console.log(err);
+                    });
                 break;
-            } else { //Someone fucked up, idk how
-                message.reply('Your arguemnts couldnt be processed.  Please try using the ~addDrinks function or if you dont see someone, try ~init.')
+            } else {
+                //Someone fucked up, idk how
+                message.reply(
+                    "Your arguemnts couldnt be processed.  Please try using the ~addDrinks function or if you dont see someone, try ~init."
+                );
                 break;
             }
-        case 'printDrinks':
-            console.log('Print drinks: ' + channel.name);
-            channels.init(message.channel);
-            channels.printDrinks(message.channel);
+        case "printDrinks":
+            console.log("Print drinks: " + message.channel);
+            channelInMemory.users.printDrinks(message.channel);
             break;
-        case 'help':
-            console.log('HELP: ' + channel.name);
+        case "help":
+            console.log("HELP: " + channel.name);
             // @devin
-            message.reply('```Commands that you can use: \n' +
-                '~addDrink [person]:                Add one drink to that person\n' +
-                '~addDrinks [person] [number]:      Add any numbe of drinks to a person.  Person and num are optional\n' +
-                '~printDrinks:                      Print the drinks for the channel\n\n' +
-                'Shouldnt be needed commands: \n' +
-                '~init:                             To init the channel\n' +
-                '~quietInit:                        To init without printing the drinks\n\n' +
-                '~callUponThineGoat [person]:       Use your Keanu bb'
-                'If you find any bugs, please hit Quentin 😀```');
+            message.reply(
+                "```Commands that you can use: \n" +
+                "~addDrink [person]:                Add one drink to that person\n" +
+                "~addDrinks [person] [number]:      Add any numbe of drinks to a person.  Person and num are optional\n" +
+                "~printDrinks:                      Print the drinks for the channel\n\n" +
+                "Shouldnt be needed commands: \n" +
+                "~init:                             To init the channel\n" +
+                "~quietInit:                        To init without printing the drinks\n\n" +
+                "~callUponThineGoat [person]:       Use your Keanu bb" +
+                "If you find any bugs, please hit Quentin 😀```"
+            );
             break;
-        case 'callUponThineGoat':
-            console.log('Using Keanu');
-            channels.init(message.channel);
-            channels.channelsKeanuUse(parsed.arguments[0], message.channel);
+        case "callUponThineGoat":
+            console.log("Using Keanu");
+            channelInMemory.users.usersKeanu(parsed.arguments[0]);
     }
 });
 
