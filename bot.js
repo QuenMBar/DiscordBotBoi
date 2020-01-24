@@ -108,16 +108,24 @@ class Channel {
   /**@name usersKeanu
    * @description Make call to user.callUponThineGoat and activate processes
    * @param {string} username - The username of user to call Keanu
+   * @param {Object} channel - Discord channel
+   * @returns {boolean} - If it was successful at finding the username
    */
-  usersKeanu(username) {
+  usersKeanu(username, channel) {
     let userCalling = this.usersList.find(({ disID }) => client.users.get(disID).username == username);
-    if (userCalling.keanu) {
-      userCalling.callUponThineGoat();
+    if (userCalling != undefined) {
+      if (userCalling.keanu) {
+        userCalling.callUponThineGoat();
+        channel.send("```KEANU REEVES HATH APPEARED```\n```AND GIVEN HIS BLESSING```");
+      } else {
+        channel.send("```WHAT THE FUCK ARE YOU EVEN DDOOIIIINNNGG```");
+      }
+      channels.saveFile();
+      return true;
     } else {
-      //TODO fix fail case
-      return;
+      channel.send("Please give a valid name!");
+      return false;
     }
-    channels.saveFile();
   }
 
   /**@name printDrinks
@@ -137,19 +145,41 @@ class Channel {
     channel.send(stringToWrite);
   }
 
+  // /**@name printKeanu
+  //  * @description Prints the coming of Keanu
+  //  * @param {Object} channel - Discord channel
+  //  * @param {String} username - Username of person calling their Keanu
+  //  */
+  // printKeanu(channel, username) {
+  //   let userCalling = this.usersList.find(({ disID }) => client.users.get(disID).username == username);
+  //   if (userCalling != undefined) {
+  //     let stringifSuccess = "";
+  //     let stringToWrite = "";
+  //     if (userCalling.keanu) {
+  //       stringToWrite = stringifSuccess;
+  //     }
+
+  //     channel.send(stringToWrite);
+  //   } else {
+  //     //TODO BAD THING HAPPEN HERE XD
+  //   }
+  // }
+
   /**@name printKeanu
-   * @description Prints the coming of Keanu
-   * @param {Object} channel - Discord channel
-   * @param {String} username - Username of person calling their Keanu
+   * @description Framework to print who does and doesn't have a Keanu
+   * @param {Object} channel - A channel from Discord.
+   * @param {members[]} channel.members - A list of the members in the channel
+   * TODO EXPAND ON THIS ONE THATS FUCKING CRAZY
    */
   printKeanu(channel) {
-    let userCalling = this.usersList.find(({ disID }) => client.users.get(disID).username == username);
-    let stringifSuccess = "```KEANU REEVES HATH APPEARED```\n```AND GIVEN HIS BLESSING```";
-    let stringToWrite = "```WHAT THE FUCK ARE YOU EVEN DDOOIIIINNNGG```";
-    if (userCalling.keanu) {
-        stringToWrite = stringifSuccess;
-    }
-
+    let stringToWrite = "```The current keanu count is: \n";
+    channel.members.forEach(gottenMember => {
+      if (!gottenMember.user.bot) {
+        let chosenUser = this.usersList.find(({ disID }) => gottenMember.user.id === disID);
+        stringToWrite += gottenMember.user.username + ": " + chosenUser.keanu + ".\n";
+      }
+    });
+    stringToWrite += "```";
     channel.send(stringToWrite);
   }
 }
@@ -419,8 +449,20 @@ client.on("message", message => {
       }
     case "callUponThineGoat":
       console.log("Using Keanu");
-      channelInMemory.usersKeanu(parsed.arguments[0]);
-      channel.channelInMemory.printKeanu(message.channel.name);
+      let returnVal = channelInMemory.usersKeanu(parsed.arguments[0], message.channel);
+      if (!returnVal) {
+        getPersonSelection(message)
+          .then(username => {
+            channelInMemory.usersKeanu(username, message.channel);
+          })
+          .catch(err => {
+            console.log(err);
+          });
+      }
+      break;
+    case "printKeanu":
+      channelInMemory.printKeanu(message.channel);
+      break;
     case "printDrinks":
       console.log("Print drinks: " + message.channel);
       channelInMemory.printDrinks(message.channel);
@@ -433,7 +475,7 @@ client.on("message", message => {
           "~addDrink [person]:                Add one drink to that person\n" +
           "~addDrinks [person] [number]:      Add any number of drinks to a person.  Person and num are optional\n" +
           "~printDrinks:                      Print the drinks for the channel\n\n" +
-          "~callUponThineGoat [person]:       Use your Keanu bb" +
+          "~callUponThineGoat [person]:       Use your Keanu bb\n" +
           "If you find any bugs, please hit Quentin 😀```"
       );
       break;
