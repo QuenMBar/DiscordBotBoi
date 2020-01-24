@@ -105,7 +105,10 @@ class Channel {
     channels.saveFile();
   }
 
-  //@quentin - just reusing the code from above b/c Keanu is much simpler but not sure if it'll work
+  /**@name usersKeanu
+   * @description Make call to user.callUponThineGoat and activate processes
+   * @param {string} username - The username of user to call Keanu
+   */
   usersKeanu(username) {
     let userCalling = this.usersList.find(({ disID }) => client.users.get(disID).username == username);
     if (userCalling.keanu) {
@@ -134,10 +137,19 @@ class Channel {
     channel.send(stringToWrite);
   }
 
+  /**@name printKeanu
+   * @description Prints the coming of Keanu
+   * @param {Object} channel - Discord channel
+   * @param {String} username - Username of person calling their Keanu
+   */
   printKeanu(channel) {
-    //TODO
-    //client.users.get(user.disID).username is fucking ridiculous
-    let stringToWrite = "```KEANU REEVES HATH APPEARED```\n```AND GIVEN HIS BLESSING```";
+    let userCalling = this.usersList.find(({ disID }) => client.users.get(disID).username == username);
+    let stringifSuccess = "```KEANU REEVES HATH APPEARED```\n```AND GIVEN HIS BLESSING```";
+    let stringToWrite = "```WHAT THE FUCK ARE YOU EVEN DDOOIIIINNNGG```";
+    if (userCalling.keanu) {
+        stringToWrite = stringifSuccess;
+    }
+
     channel.send(stringToWrite);
   }
 }
@@ -408,6 +420,7 @@ client.on("message", message => {
     case "callUponThineGoat":
       console.log("Using Keanu");
       channelInMemory.usersKeanu(parsed.arguments[0]);
+      channel.channelInMemory.printKeanu(message.channel.name);
     case "printDrinks":
       console.log("Print drinks: " + message.channel);
       channelInMemory.printDrinks(message.channel);
