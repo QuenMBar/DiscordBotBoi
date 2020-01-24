@@ -2,22 +2,23 @@
   {
     "channelID": "340585026465038346",
     "guildID": "340585026465038346",
-    "users": {
-      "usersList": [
-        {
-          "disID": "211239874458550272",
-          "numDrinks": 33
-        },
-        {
-          "disID": "258876507076820993",
-          "numDrinks": 33
-        },
-        {
-          "disID": "623987696716480522",
-          "numDrinks": 34
-        }
-      ]
-    }
+    "usersList": [
+      {
+        "disID": "211239874458550272",
+        "numDrinks": 95,
+        "keanu": false
+      },
+      {
+        "disID": "258876507076820993",
+        "numDrinks": 39,
+        "keanu": false
+      },
+      {
+        "disID": "623987696716480522",
+        "numDrinks": 39,
+        "keanu": true
+      }
+    ]
   },
   {
     "channelID": "430990386681610241",
@@ -46,7 +47,7 @@
         },
         {
           "disID": "502295662294204416",
-          "numDrinks": 1
+          "numDrinks": 0
         },
         {
           "disID": "258876507076820993",
