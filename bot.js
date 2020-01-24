@@ -145,26 +145,6 @@ class Channel {
     channel.send(stringToWrite);
   }
 
-  // /**@name printKeanu
-  //  * @description Prints the coming of Keanu
-  //  * @param {Object} channel - Discord channel
-  //  * @param {String} username - Username of person calling their Keanu
-  //  */
-  // printKeanu(channel, username) {
-  //   let userCalling = this.usersList.find(({ disID }) => client.users.get(disID).username == username);
-  //   if (userCalling != undefined) {
-  //     let stringifSuccess = "";
-  //     let stringToWrite = "";
-  //     if (userCalling.keanu) {
-  //       stringToWrite = stringifSuccess;
-  //     }
-
-  //     channel.send(stringToWrite);
-  //   } else {
-  //     //TODO BAD THING HAPPEN HERE XD
-  //   }
-  // }
-
   /**@name printKeanu
    * @description Framework to print who does and doesn't have a Keanu
    * @param {Object} channel - A channel from Discord.
@@ -184,6 +164,15 @@ class Channel {
   }
 }
 
+class useless {
+  constructor(var1) {
+    this.usless = var1;
+  }
+
+  change(newVar) {
+    this.usless = newVar;
+  }
+}
 class Channels {
   /**@class Channels is a collection of channel.  It has all the channels that the bot
    * is currently a part of and is in charge of navigating to the correct one.  It also reads
