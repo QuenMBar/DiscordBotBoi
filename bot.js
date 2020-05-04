@@ -28,13 +28,15 @@ class User {
    * lifting is done by the channel class.
    * @param {snowflake} disID - The discord ID of the user
    * @param {number} numDrinks - The amount of drinks the user has
-   * @param {boolean} [keanuVal] - The value of Keanu
+   * @param {boolean} [hasKeanu] - The value of Keanu
+   * @param {boolean} [gameChoice] - The game that the user used Keanu on
    */
-  constructor(disID, numDrinks, keanuVal) {
+  constructor(disID, numDrinks, hasKeanu, gameChoice) {
     this.disID = disID;
     this.numDrinks = numDrinks;
-    if (keanuVal === undefined) keanuVal = true;
-    this.keanu = keanuVal;
+    if (hasKeanu === undefined) hasKeanu = true;
+    this.keanu = hasKeanu;
+    this.keanuChoice = gameChoice;
   }
 
   /**@name addDrinks
@@ -144,26 +146,6 @@ class Channel {
     stringToWrite += "```";
     channel.send(stringToWrite);
   }
-
-  // /**@name printKeanu
-  //  * @description Prints the coming of Keanu
-  //  * @param {Object} channel - Discord channel
-  //  * @param {String} username - Username of person calling their Keanu
-  //  */
-  // printKeanu(channel, username) {
-  //   let userCalling = this.usersList.find(({ disID }) => client.users.get(disID).username == username);
-  //   if (userCalling != undefined) {
-  //     let stringifSuccess = "";
-  //     let stringToWrite = "";
-  //     if (userCalling.keanu) {
-  //       stringToWrite = stringifSuccess;
-  //     }
-
-  //     channel.send(stringToWrite);
-  //   } else {
-  //     //TODO BAD THING HAPPEN HERE XD
-  //   }
-  // }
 
   /**@name printKeanu
    * @description Framework to print who does and doesn't have a Keanu
